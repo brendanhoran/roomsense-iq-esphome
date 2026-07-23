@@ -1,0 +1,13 @@
+# Keep the GitHub Actions used in .github/workflows current. Dependabot opens a
+# PR when a tracked action publishes a new release, updating both the pinned
+# commit SHA and the "# vX.Y.Z" version comment together.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    open-pull-requests-limit: 5
