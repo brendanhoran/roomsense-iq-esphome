@@ -22,8 +22,10 @@ sensor to Home Assistant over the encrypted native API.
 | Light Level | CdS photocell | ADC1 (GPIO5) | `adc` |
 | Status LED | EAST1616RGBB4 | LEDC | `light` (rgb) |
 
-**Not included:** the CO gas sensor (wired to ADC2/GPIO20, which the ESP32-S3
-cannot read while Wi-Fi is on) and the analog PIR (the LD2410 supersedes it).
+**Not included:** the carbon monoxide (CO) gas sensor - a separate analog sensor,
+not to be confused with the carbon dioxide (CO2) above - which is wired to
+ADC2/GPIO20, unreadable while Wi-Fi is on for the ESP32-S3; and the analog PIR
+(the LD2410 supersedes it).
 
 ## Hardware
 

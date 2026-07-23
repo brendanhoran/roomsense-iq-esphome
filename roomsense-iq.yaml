@@ -9,8 +9,10 @@
 # orientation on the bench at first flash.
 #
 # Not carried over from the original firmware:
-#   - CO gas sensor  : wired to ADC2 (GPIO20), which the ESP32-S3 cannot read
-#                      while Wi-Fi is active. Dropped.
+#   - CO (carbon monoxide) sensor : a separate analog gas sensor, distinct from
+#                      the SCD4x carbon dioxide (CO2) below. Wired to ADC2
+#                      (GPIO20), which the ESP32-S3 cannot read while Wi-Fi is
+#                      active. Dropped.
 #   - Analog PIR     : superseded by the LD2410 radar presence. Dropped.
 
 substitutions:
