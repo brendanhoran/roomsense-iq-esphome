@@ -5,6 +5,12 @@ Maintainable [ESPHome](https://esphome.io) firmware for the **RoomSense IQ**
 ESP-IDF firmware after that project went dormant, and reports every usable
 sensor to Home Assistant over the encrypted native API.
 
+> **Have an MFrontier MPM10 PM sensor?** The [`mpm10`](components/mpm10/) component
+> here is a standalone ESPHome driver for it - a part that had no existing ESPHome
+> support, written from scratch for this project. It is not tied to the RoomSense
+> IQ: anyone with an MPM10 on any ESP32/ESP8266 board can drop it into their own
+> config. See [The MPM10 component](#the-mpm10-component) for how.
+
 ## Sensors
 
 | Home Assistant entity | Device | Bus | ESPHome component |
@@ -37,8 +43,9 @@ self-heating inside the enclosure; tune it to your case.
 The particulate sensor is an **MFrontier MPM10** (Shenzhen MemsFrontier
 Electronics) laser-scattering PM sensor, which supports UART/I2C/PWM; this board
 wires it over I2C at address 0x4D. It reports PM1/PM2.5/PM10 as big-endian uint16
-values split across consecutive registers. There is no stock ESPHome component
-for it, so [`components/mpm10/`](components/mpm10/) implements one.
+values split across consecutive registers. ESPHome has no stock component for the
+MPM10, so this project provides one: [`components/mpm10/`](components/mpm10/) is a
+from-scratch ESPHome driver and the main piece of original code in this repo.
 
 The register map (address 0x4D; PM1/PM2.5/PM10 as big-endian uint16 at registers
 0x20/0x22/0x24) was first recovered from the original RoomSense ESP-IDF firmware,
@@ -57,6 +64,41 @@ Note: the datasheet's particle-count rows are internally garbled (the diameter
 thresholds are printed in the sample-volume column). The register order and the
 Plantower-family protocol make the meaning unambiguous, and it is borne out live:
 the counts come back as a clean monotonically-decreasing size distribution.
+
+### Reusing the component on your own board
+
+The `mpm10` component is self-contained - it depends only on ESPHome's `i2c` and
+`sensor` platforms, nothing RoomSense-specific - so anyone with an MPM10 can use
+it independently of the rest of this firmware. Point `external_components` at
+this repo and add the platform (all sensors are optional; list only what you
+want):
+
+```yaml
+external_components:
+  - source: github://brendanhoran/roomsense-iq-esphome
+    components: [mpm10]
+
+i2c:
+  sda: GPIO12      # your board's pins (these are the RoomSense IQ's)
+  scl: GPIO13
+
+sensor:
+  - platform: mpm10
+    # address defaults to 0x4D
+    pm1_0:
+      name: "PM1"
+    pm2_5:
+      name: "PM2.5"
+    pm10_0:
+      name: "PM10"
+    # optional: pm1_0_atm / pm2_5_atm / pm10_0_atm (atmospheric-mode mass)
+    # optional: pm_0_3um / pm_0_5um / pm_1_0um / pm_2_5um / pm_5_0um / pm_10_0um
+    #           (particle-number counts, per 0.1 L)
+```
+
+Alternatively, copy `components/mpm10/` into a local `components/` directory and
+use `source: {type: local, path: components}`. Contributions to fold this into
+[ESPHome upstream](https://esphome.io) would be welcome.
 
 ## Quick start
 
