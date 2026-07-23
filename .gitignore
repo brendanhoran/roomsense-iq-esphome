@@ -1,0 +1,14 @@
+# ESPHome build cache and per-device secrets
+secrets.yaml
+.esphome/
+/build/
+
+# Python virtualenvs and caches
+.venv/
+venv/
+*-venv/
+__pycache__/
+*.py[cod]
+
+# Flash dumps (these contain the NVS partition, e.g. WiFi credentials)
+*.bin

@@ -1,0 +1,34 @@
+---
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  esphome-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ESPHome
+        run: pip install esphome
+
+      # esphome config needs a secrets.yaml. Build a throwaway one from the
+      # example and fill the API key with a random 32-byte value at runtime, so
+      # no real or fixed credentials live in the repo or this workflow.
+      - name: Generate throwaway secrets
+        run: |
+          cp secrets.yaml.example secrets.yaml
+          key="$(head -c 32 /dev/urandom | base64)"
+          sed -i "s|REPLACE_WITH_openssl_rand_-base64_32|$key|" secrets.yaml
+
+      - name: Validate configuration and custom component
+        run: esphome config roomsense-iq.yaml
