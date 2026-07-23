@@ -29,3 +29,12 @@ the repo is self-contained. Source URLs are listed for provenance.
   PDFs for that one); the serial protocol is common across LD2410 / B / C.
 - The MPM10 protocol datasheet confirms our register map: 7-bit I2C address
   `0x4d`; PM1.0/PM2.5/PM10 as big-endian uint16 at `0x20`/`0x22`/`0x24`.
+
+## Copyright
+
+The PDFs in this directory are the copyright of their respective manufacturers
+(Sensirion, Hi-Link, MFrontier, RoomSense Labs). They are the vendors' freely
+distributed datasheets, bundled here for convenience and reference only, and are
+**not** covered by this repository's CC0 licence - CC0 applies solely to the
+project's own files. Source URLs are given in the tables above; the vendors
+retain all rights to their documents.

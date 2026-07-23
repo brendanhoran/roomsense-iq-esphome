@@ -1,5 +1,5 @@
 ---
-name: validate
+name: build
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  esphome-config:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -21,14 +21,31 @@ jobs:
       - name: Install ESPHome
         run: pip install esphome
 
-      # esphome config needs a secrets.yaml. Build a throwaway one from the
-      # example and fill the API key with a random 32-byte value at runtime, so
-      # no real or fixed credentials live in the repo or this workflow.
+      # Cache the PlatformIO / ESP-IDF toolchain and build tree so the compile
+      # step doesn't re-download hundreds of MB every run. The key busts when the
+      # config or the mpm10 component changes; restore-keys falls back to the
+      # most recent cache otherwise (a partial hit still saves the big download).
+      - name: Cache ESPHome build
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: |
+            ~/.platformio
+            .esphome
+          key: esphome-${{ hashFiles('roomsense-iq.yaml', 'components/mpm10/**', '.github/workflows/ci.yaml') }}
+          restore-keys: |
+            esphome-
+
+      # esphome needs a secrets.yaml. Build a throwaway one from the example and
+      # fill the API key with a random 32-byte value at runtime, so no real or
+      # fixed credentials live in the repo or this workflow.
       - name: Generate throwaway secrets
         run: |
           cp secrets.yaml.example secrets.yaml
           key="$(head -c 32 /dev/urandom | base64)"
           sed -i "s|REPLACE_WITH_openssl_rand_-base64_32|$key|" secrets.yaml
 
-      - name: Validate configuration and custom component
+      - name: Validate configuration (fast fail on schema/codegen errors)
         run: esphome config roomsense-iq.yaml
+
+      - name: Compile firmware (builds the mpm10 C++ component)
+        run: esphome compile roomsense-iq.yaml

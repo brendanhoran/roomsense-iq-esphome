@@ -143,4 +143,8 @@ are the independent confirmation of the protocol details.
 
 ## Licence
 
-Public domain (CC0 1.0). See [`LICENSE`](LICENSE).
+Public domain (CC0 1.0) for this project's own files. See [`LICENSE`](LICENSE).
+
+The vendor datasheets bundled in [`hardware/`](hardware/) are the copyright of
+their respective manufacturers and are **not** covered by CC0 - they are included
+for reference only. See [`hardware/README.md`](hardware/README.md#copyright).

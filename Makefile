@@ -1,7 +1,7 @@
 # RoomSense IQ - ESPHome firmware
 #
 # Usage: `make help`. Override the binary or target device on the command line,
-# e.g. `make upload DEVICE=192.168.200.213` or `make logs DEVICE=/dev/ttyUSB0`.
+# e.g. `make upload DEVICE=roomsense-iq.local` or `make logs DEVICE=/dev/ttyUSB0`.
 
 ESPHOME ?= esphome
 CONFIG  ?= roomsense-iq.yaml
