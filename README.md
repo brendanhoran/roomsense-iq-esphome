@@ -37,8 +37,51 @@ Pin map (recovered from the original firmware and the Rev8 schematic in
 - RGB LED (LEDC): R=GPIO46, G=GPIO10, B=GPIO3
 - Light (ADC1): GPIO5
 
-The SCD4x uses a large `temperature_offset` (12.1 C) to compensate for
-self-heating inside the enclosure; tune it to your case.
+The SCD4x uses a large `temperature_offset` (10.7 C) to compensate for
+self-heating inside the enclosure; tune it to your case against a trusted
+thermometer once the enclosure has reached thermal equilibrium. The offset only
+shifts the reported temperature and humidity, not the CO2 reading. To align the
+CO2 value, see [CO2 calibration](#co2-calibration) below.
+
+## CO2 calibration
+
+The SCD4x has a factory accuracy of about +-(50 ppm + 5% of reading), so out of
+the box it can read ~150 ppm away from another sensor and still be within spec.
+Two Home Assistant controls (both in the device's **Configuration** section) let
+you align it to a reference you trust:
+
+- **CO2 recalibration target** (number, ppm): the known CO2 of the air the
+  device is currently in.
+- **CO2 forced recalibration** (button): writes that value to the sensor's
+  baseline. This is a Sensirion forced recalibration (FRC); it is stored in the
+  sensor, so it survives reboots.
+
+Steps:
+
+1. Put the device in air of a known CO2 level. Fresh outdoor air (~420 ppm) is
+   the gold-standard reference; alternatively sit it beside a trusted sensor in
+   still, well-mixed indoor air.
+2. Leave it running there for at least ~5 minutes. Sensirion requires more than
+   3 minutes of stable measurement before an FRC.
+3. Set **CO2 recalibration target** to the reference value. Indoors that is the
+   trusted sensor's current reading, not 420.
+4. Press **CO2 forced recalibration**.
+
+After the FRC the sensor restarts measurement, so give it a few minutes: CO2,
+temperature and humidity all drift for a couple of minutes before they settle to
+their final values, so do not judge the result from the first reading or two. A
+one-off `scd4x.sensor took a long time for an operation (405 ms)` log line right
+after pressing the button is expected (the FRC path blocks briefly by design)
+and does not recur in normal operation.
+
+Automatic self-calibration (ASC) is disabled here
+(`automatic_self_calibration: false`). ASC assumes the sensor regularly sees
+fresh ~400 ppm air and nudges its baseline to match; in a room that stays closed
+(for example over winter) that assumption fails and ASC slowly drags the reading
+low, undoing a manual calibration. With ASC off nothing auto-corrects, so re-run
+the forced recalibration every few months to catch slow sensor aging. If the
+room is well ventilated and regularly reaches outdoor air, set it back to `true`
+and the manual step is not needed.
 
 ## The MPM10 component
 
@@ -105,8 +148,9 @@ use `source: {type: local, path: components}`. Contributions to fold this into
 ## Quick start
 
 ```sh
-python3 -m venv .venv
-.venv/bin/pip install esphome
+make setup                          # create .venv and install the pinned ESPHome
+# ESPHome needs Python 3.12-3.14; override if your default python3 is outside
+# that range, e.g. `make setup PYTHON=python3.12`.
 
 cp secrets.yaml.example secrets.yaml
 # edit secrets.yaml: Wi-Fi credentials + an API key (openssl rand -base64 32)
@@ -125,6 +169,8 @@ ESPHome) and paste the API key.
 - This board does not break out the ESP32-S3 native USB, so `logger` is pinned
   to `hardware_uart: UART0` to get serial logs over the USB-C cable.
 - The SGP41 needs ~90 s to warm up after each boot before VOC/NOx are valid.
+- The SCD4x needs a few minutes after any restart (a reboot or a forced
+  recalibration) for CO2, temperature and humidity to settle to steady state.
 
 ## Acknowledgements
 

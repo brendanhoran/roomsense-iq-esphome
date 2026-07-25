@@ -100,10 +100,21 @@ ld2410:
 sensor:
   # CO2, temperature and humidity.
   - platform: scd4x
-    # Self-heating compensation. The original firmware used 12.1 C; use ~7 C
-    # for a well-ventilated enclosure. Tune against a reference thermometer.
-    temperature_offset: 12.1
-    automatic_self_calibration: true
+    id: scd4x_co2
+    # Self-heating compensation: reported temperature = raw - offset, so a
+    # larger value lowers the reported temperature. It compensates for heat
+    # from the enclosure and does NOT affect the CO2 reading (per Sensirion).
+    # The original firmware used 12.1 C, which measured ~1.4 C low against a
+    # calibrated reference, so trimmed to 10.7 C. Re-tune at thermal
+    # equilibrium against a trusted thermometer.
+    temperature_offset: 10.7
+    # Automatic self-calibration assumes the sensor sees fresh ~400 ppm air
+    # regularly. This room stays mostly closed (winter), so it rarely reaches
+    # fresh air; ASC would drift the baseline low and undo the forced
+    # recalibration. Disabled, so CO2 relies on the manual FRC button below.
+    # Re-run the FRC every few months, or set back to true if the room starts
+    # getting aired out regularly again.
+    automatic_self_calibration: false
     co2:
       name: "Carbon dioxide"
     temperature:
@@ -174,6 +185,43 @@ binary_sensor:
       name: "Moving Target"
     has_still_target:
       name: "Still Target"
+
+# --- SCD4x CO2 forced recalibration (FRC) -----------------------------------
+
+# Align the CO2 reading to a known reference. The SCD4x factory accuracy is
+# +-(50 ppm + 5% of reading), so two sensors can legitimately differ by ~150
+# ppm; this pins the baseline to a value you trust. Procedure:
+#   1. Put the device in stable, well-mixed air of a known CO2 level. Fresh
+#      outdoor air (~420 ppm) is the gold-standard reference; alternatively,
+#      sit it beside a trusted sensor in still indoor air.
+#   2. Leave it running there for at least ~5 minutes (Sensirion requires >3
+#      min of periodic measurement in constant CO2 before an FRC).
+#   3. Set "CO2 recalibration target" to the reference ppm.
+#   4. Press "CO2 forced recalibration".
+# The correction is written to the sensor's baseline, so it survives reboots.
+
+number:
+  - platform: template
+    id: scd4x_frc_target
+    name: "CO2 recalibration target"
+    entity_category: config
+    unit_of_measurement: ppm
+    min_value: 350
+    max_value: 2000
+    step: 5
+    initial_value: 420
+    optimistic: true
+    restore_value: true
+    mode: box
+
+button:
+  - platform: template
+    name: "CO2 forced recalibration"
+    entity_category: config
+    on_press:
+      - scd4x.perform_forced_calibration:
+          id: scd4x_co2
+          value: !lambda "return (int) id(scd4x_frc_target).state;"
 
 # --- Status RGB LED (EAST1616RGBB4, common-anode via LEDC PWM) ---------------
 

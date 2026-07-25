@@ -19,7 +19,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install ESPHome
-        run: pip install esphome
+        run: pip install -r requirements.txt
 
       # Cache the PlatformIO / ESP-IDF toolchain and build tree so the compile
       # step doesn't re-download hundreds of MB every run. The key busts when the
