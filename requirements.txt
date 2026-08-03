@@ -1,4 +1,4 @@
 # Build toolchain for the RoomSense IQ ESPHome firmware.
 # Pinned for reproducible local + CI builds; Dependabot bumps it weekly.
 # ESPHome supports Python >=3.12,<3.15. Install with `make setup`.
-esphome==2026.7.2
+esphome==2026.7.3
